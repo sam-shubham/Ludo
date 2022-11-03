@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
-var MongoClient = require('mongodb').MongoClient;
+var MongoClient = require("mongodb").MongoClient;
 var uri = "mongodb+srv://ksbm:Ravi1234@cluster0.rneyjw2.mongodb.net/test1";
 
 dotenv.config();
@@ -33,7 +33,7 @@ app.get("/payments", (req, res) => {
   console.log(user_email);
   res.render("payment", {
     key: "rzp_test_zJL9AiBPgD6OMg",
-    amount: (req.query.amount+"00"),
+    amount: req.query.amount + "00",
     email: user_email,
     mobile: req.query.mobile,
   });
@@ -57,11 +57,10 @@ app.post("/api/payment/verify", (req, res) => {
     .createHmac("sha256", "tqfWa57F8piYzBJDHQJadJcm")
     .update(body.toString())
     .digest("hex");
-  console.log("sig" + req.body.razorpay_signature+" "+ req.body.amount);
+  console.log("sig" + req.body.razorpay_signature + " " + req.body.amount);
 
   var response = { status: "failure" };
   if (expectedSignature === req.body.razorpay_signature) {
-
     VerifyUserMongoDB(user_email, req.body.amount);
     response = { status: "success" };
   }
@@ -70,30 +69,30 @@ app.post("/api/payment/verify", (req, res) => {
   res.send(response);
 });
 app.listen("3002", () => {
-  console.log("server started");
+  console.log("server started on port 3002");
 });
-
-
 
 function VerifyUserMongoDB(email, user_chips) {
   MongoClient.connect(uri, function (err, db) {
-    if (err)
-      console.log("not connected ");
+    if (err) console.log("not connected ");
     var dbo = db.db("ksbm");
     var query = { email: email };
-    dbo.collection("player").find(query).toArray(function (err, result) {
-      if (err) {
-      } else {
-        if (result.length != 0) {
-          var chValue = parseInt(result[0].chips,10);
-          chValue += (parseInt(user_chips,10)/100);
-          console.log("nn " + result[0].email + " " + chValue);
-           Updated_Chips(result[0].email, chValue);
+    dbo
+      .collection("player")
+      .find(query)
+      .toArray(function (err, result) {
+        if (err) {
+        } else {
+          if (result.length != 0) {
+            var chValue = parseInt(result[0].chips, 10);
+            chValue += parseInt(user_chips, 10) / 100;
+            console.log("nn " + result[0].email + " " + chValue);
+            Updated_Chips(result[0].email, chValue);
+          }
         }
-      }
-      //console.log(result);
-      db.close();
-    });
+        //console.log(result);
+        db.close();
+      });
   });
 }
 function Updated_Chips(email, chips) {
@@ -101,14 +100,16 @@ function Updated_Chips(email, chips) {
     var dbo = db.db("ksbm");
     var myquery = { email: email };
     var newvalues = { $set: { chips: chips } };
-    dbo.collection("player").updateOne(myquery, newvalues, function (error, result) {
-      if (error) {
-        console.log("error update document");
-      } else {
-        console.log("update success");
-      }
+    dbo
+      .collection("player")
+      .updateOne(myquery, newvalues, function (error, result) {
+        if (error) {
+          console.log("error update document");
+        } else {
+          console.log("update success");
+        }
 
-      db.close();
-    });
+        db.close();
+      });
   });
 }
